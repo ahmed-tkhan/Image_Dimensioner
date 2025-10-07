@@ -1,53 +1,104 @@
 # Image Dimensioner
 
-A standalone Python application for measuring dimensions on diagrams and images. This tool enables users to calibrate images using a known distance and then accurately measure any distance by converting pixel values into real-world units.
+A precision measurement tool for digital images and technical diagrams. Transform pixel measurements into real-world dimensions with professional-grade accuracy.
 
-## Features
+## Overview
 
-- **Load Images**: Support for multiple image formats (PNG, JPG, JPEG, BMP, GIF)
-- **Calibration Mode**: Set a scale reference by clicking two points on a known distance
-- **Measurement Mode**: Measure any distance on the calibrated image
-- **Interactive Canvas**: Visual feedback with point markers and lines
-- **Scrollable View**: Navigate large images with scrollbars
-- **User-Friendly Interface**: Simple menu-driven interface with clear instructions
+Image Dimensioner is a desktop application built for engineers, designers, and researchers who need to extract accurate measurements from digital images. Using a simple calibration process, the tool converts pixel distances to physical measurements in your preferred units.
 
-## Installation
+## Key Features
 
-### Prerequisites
+**🎯 Precision Measurement**
+- Sub-pixel accuracy using advanced coordinate interpolation
+- Support for multiple measurement units (mm, cm, m, inches, feet)
+- Real-time calculation with immediate visual feedback
 
-- Python 3.6 or higher
-- pip (Python package manager)
+**🔧 Professional Tools**
+- Interactive zoom with mouse wheel control (Ctrl+scroll)
+- Pan navigation (scroll: vertical, Shift+scroll: horizontal)
+- Comprehensive measurement logging with timestamps
+- Visual point markers and measurement lines
 
-### Install Dependencies
+**📊 Data Management**
+- Persistent measurement history
+- Exportable measurement logs
+- Session-based calibration settings
 
+**💻 User Experience**
+- Native desktop application (no browser required)
+- Intuitive point-and-click interface
+- Responsive canvas with smooth scrolling
+- Professional visual design
+
+## Technical Specifications
+
+- **Language**: Python 3.6+
+- **GUI Framework**: Tkinter (cross-platform)
+- **Image Processing**: Pillow (PIL)
+- **Supported Formats**: PNG, JPG, JPEG, BMP, GIF
+- **Platforms**: Windows, macOS, Linux
+
+## Quick Start
+
+### Installation
 ```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-The only external dependency is Pillow (PIL) for image processing. Tkinter comes bundled with Python.
-
-## Usage
-
-### Running the Application
-
-```bash
+# Run application
 python image_dimensioner.py
 ```
 
-Or make it executable (Linux/Mac):
+### Basic Workflow
+1. **Load Image**: Import your technical drawing or photograph
+2. **Calibrate**: Click two points on a known distance, enter the actual measurement
+3. **Measure**: Click any two points to get real-world dimensions
+
+## Application Architecture
+
+The application follows a clean MVC pattern with separated concerns:
+
+- **Model**: Calculation engine for coordinate geometry and unit conversion
+- **View**: Tkinter-based responsive interface with custom widgets  
+- **Controller**: Event handling for mouse interactions and menu operations
+
+Key algorithmic components:
+- Euclidean distance calculation with floating-point precision
+- Scale factor calibration using linear transformation
+- Zoom-aware coordinate mapping for accurate measurements
+
+## Build & Distribution
+
+The project includes automated build configuration for standalone distribution:
 
 ```bash
-chmod +x image_dimensioner.py
-./image_dimensioner.py
+# Create executable
+pyinstaller image_dimensioner.spec
+
+# Output: dist/ImageDimensioner.exe
 ```
 
-### Step-by-Step Guide
+Features custom application icon and optimized packaging for professional deployment.
 
-#### 1. Load an Image
+## Use Cases
 
-1. Click **File** → **Open Image**
-2. Select an image file (PNG, JPG, JPEG, BMP, or GIF)
-3. The image will be displayed on the canvas
+- **Mechanical Engineering**: Measure component dimensions from technical drawings
+- **Architecture**: Extract measurements from floor plans and blueprints  
+- **Research**: Quantify specimen dimensions in microscopy images
+- **Quality Control**: Verify product dimensions from photographs
+- **Education**: Demonstrate measurement concepts in STEM curricula
+
+## Development
+
+Built with modern Python development practices:
+- Modular code architecture
+- Comprehensive error handling
+- Unit test coverage for core calculations
+- Professional documentation standards
+
+---
+
+*Developed by Ahmed Khan | [GitHub](https://github.com/ahmed-tkhan/Image_Dimensioner)*
 
 #### 2. Calibration
 

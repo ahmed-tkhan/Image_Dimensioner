@@ -9,9 +9,10 @@ This application allows users to:
 """
 
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
+from tkinter import filedialog, messagebox, simpledialog, ttk
 from PIL import Image, ImageTk
 import math
+from datetime import datetime
 
 
 class ImageDimensioner:
@@ -30,7 +31,14 @@ class ImageDimensioner:
         self.mode = "calibration"  # "calibration" or "measurement"
         self.points = []
         self.calibration_factor = None
-        self.unit = "cm"
+        self.unit = "mm"
+        self.zoom_factor = 1.0
+        
+        # Available units
+        self.available_units = ["mm", "cm", "m", "inches", "feet"]
+        
+        # Measurement logs
+        self.measurement_logs = []
         
         # Canvas items for visual feedback
         self.lines = []
@@ -38,7 +46,9 @@ class ImageDimensioner:
         
         # Create UI
         self.create_menu()
+        self.create_controls()
         self.create_canvas()
+        self.create_logs_console()
         self.create_status_bar()
         
     def create_menu(self):
@@ -64,6 +74,34 @@ class ImageDimensioner:
         menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="About", command=self.show_about)
         help_menu.add_command(label="Instructions", command=self.show_instructions)
+        
+    def create_controls(self):
+        """Create the controls panel."""
+        controls_frame = tk.Frame(self.root)
+        controls_frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        # Unit selection
+        tk.Label(controls_frame, text="Units:").pack(side=tk.LEFT, padx=(0, 5))
+        self.unit_var = tk.StringVar(value=self.unit)
+        unit_combo = ttk.Combobox(
+            controls_frame, 
+            textvariable=self.unit_var, 
+            values=self.available_units,
+            state="readonly",
+            width=8
+        )
+        unit_combo.pack(side=tk.LEFT, padx=(0, 10))
+        unit_combo.bind("<<ComboboxSelected>>", self.on_unit_changed)
+        
+        # Clear logs button
+        clear_btn = tk.Button(
+            controls_frame, 
+            text="Clear Logs", 
+            command=self.clear_logs,
+            bg="#ff6b6b",
+            fg="white"
+        )
+        clear_btn.pack(side=tk.RIGHT, padx=(10, 0))
         
     def create_canvas(self):
         """Create the canvas for displaying images."""
@@ -94,6 +132,46 @@ class ImageDimensioner:
         # Bind mouse click event
         self.canvas.bind("<Button-1>", self.on_canvas_click)
         
+        # Bind scroll and zoom events
+        self.canvas.bind("<Control-MouseWheel>", self.on_zoom)
+        self.canvas.bind("<MouseWheel>", self.on_vertical_scroll)
+        self.canvas.bind("<Shift-MouseWheel>", self.on_horizontal_scroll)
+        
+        # Make canvas focusable for key events
+        self.canvas.focus_set()
+        
+    def create_logs_console(self):
+        """Create the measurement logs console at the bottom."""
+        logs_frame = tk.Frame(self.root)
+        logs_frame.pack(fill=tk.BOTH, expand=False, padx=5, pady=(0, 5))
+        
+        # Console label
+        tk.Label(logs_frame, text="Measurement Logs:", font=("Arial", 9, "bold")).pack(anchor=tk.W)
+        
+        # Create text widget with scrollbar
+        logs_container = tk.Frame(logs_frame)
+        logs_container.pack(fill=tk.BOTH, expand=True)
+        
+        # Scrollbar for logs
+        logs_scrollbar = tk.Scrollbar(logs_container)
+        logs_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Text widget for logs
+        self.logs_text = tk.Text(
+            logs_container,
+            height=6,
+            wrap=tk.WORD,
+            yscrollcommand=logs_scrollbar.set,
+            font=("Consolas", 9),
+            bg="#f8f9fa",
+            fg="#333"
+        )
+        self.logs_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        logs_scrollbar.config(command=self.logs_text.yview)
+        
+        # Make logs read-only
+        self.logs_text.config(state=tk.DISABLED)
+        
     def create_status_bar(self):
         """Create the status bar at the bottom."""
         self.status_bar = tk.Label(
@@ -108,6 +186,59 @@ class ImageDimensioner:
     def update_status(self, message):
         """Update the status bar message."""
         self.status_bar.config(text=message)
+        
+    def on_unit_changed(self, event=None):
+        """Handle unit selection change."""
+        self.unit = self.unit_var.get()
+        # Reset calibration when unit changes
+        self.calibration_factor = None
+        self.add_log(f"Unit changed to {self.unit}. Please recalibrate.")
+        self.update_status(f"Unit changed to {self.unit}. Calibration reset - please recalibrate.")
+        
+    def on_zoom(self, event):
+        """Handle Ctrl+scroll zoom."""
+        if not self.image:
+            return
+            
+        # Calculate zoom factor
+        zoom_in = event.delta > 0
+        zoom_factor = 1.1 if zoom_in else 0.9
+        self.zoom_factor *= zoom_factor
+        
+        # Limit zoom range
+        self.zoom_factor = max(0.1, min(5.0, self.zoom_factor))
+        
+        # Resize and redisplay image
+        self.display_image()
+        
+    def on_vertical_scroll(self, event):
+        """Handle vertical scrolling."""
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        
+    def on_horizontal_scroll(self, event):
+        """Handle Shift+scroll horizontal scrolling."""
+        self.canvas.xview_scroll(int(-1 * (event.delta / 120)), "units")
+        
+    def add_log(self, message):
+        """Add a message to the logs console."""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        log_entry = f"[{timestamp}] {message}\n"
+        
+        self.logs_text.config(state=tk.NORMAL)
+        self.logs_text.insert(tk.END, log_entry)
+        self.logs_text.see(tk.END)
+        self.logs_text.config(state=tk.DISABLED)
+        
+        # Store in logs list
+        self.measurement_logs.append({"timestamp": timestamp, "message": message})
+        
+    def clear_logs(self):
+        """Clear the measurement logs."""
+        self.logs_text.config(state=tk.NORMAL)
+        self.logs_text.delete(1.0, tk.END)
+        self.logs_text.config(state=tk.DISABLED)
+        self.measurement_logs.clear()
+        self.add_log("Logs cleared")
         
     def load_image(self):
         """Load an image file."""
@@ -128,17 +259,30 @@ class ImageDimensioner:
         if file_path:
             try:
                 self.image = Image.open(file_path)
+                self.zoom_factor = 1.0  # Reset zoom when loading new image
                 self.display_image()
                 self.reset_points()
+                filename = file_path.split("/")[-1].split("\\")[-1]  # Get just filename
+                self.add_log(f"Image loaded: {filename}")
                 self.update_status(f"Image loaded: {file_path} | Mode: {self.mode.capitalize()}")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load image: {str(e)}")
                 
     def display_image(self):
-        """Display the loaded image on the canvas."""
+        """Display the loaded image on the canvas with current zoom."""
         if self.image:
+            # Calculate new size based on zoom
+            original_size = self.image.size
+            new_size = (
+                int(original_size[0] * self.zoom_factor),
+                int(original_size[1] * self.zoom_factor)
+            )
+            
+            # Resize image for display
+            display_image = self.image.resize(new_size, Image.Resampling.LANCZOS)
+            
             # Convert to PhotoImage
-            self.photo = ImageTk.PhotoImage(self.image)
+            self.photo = ImageTk.PhotoImage(display_image)
             
             # Clear canvas
             self.canvas.delete("all")
@@ -153,6 +297,7 @@ class ImageDimensioner:
         """Switch to calibration mode."""
         self.mode = "calibration"
         self.reset_points()
+        self.add_log("Switched to Calibration mode")
         self.update_status(f"Calibration mode: Click two points on a known distance")
         
     def set_measurement_mode(self):
@@ -167,6 +312,7 @@ class ImageDimensioner:
             
         self.mode = "measurement"
         self.reset_points()
+        self.add_log("Switched to Measurement mode")
         self.update_status(f"Measurement mode: Click two points to measure distance")
         
     def reset_points(self):
@@ -189,14 +335,18 @@ class ImageDimensioner:
             return
             
         # Get canvas coordinates
-        x = self.canvas.canvasx(event.x)
-        y = self.canvas.canvasy(event.y)
+        canvas_x = self.canvas.canvasx(event.x)
+        canvas_y = self.canvas.canvasy(event.y)
         
-        # Add point
-        self.points.append((x, y))
+        # Convert to original image coordinates (accounting for zoom)
+        original_x = canvas_x / self.zoom_factor
+        original_y = canvas_y / self.zoom_factor
         
-        # Draw point marker
-        marker = self.draw_point(x, y)
+        # Add point (store original coordinates for calculations)
+        self.points.append((original_x, original_y))
+        
+        # Draw point marker at canvas coordinates
+        marker = self.draw_point(canvas_x, canvas_y)
         self.point_markers.append(marker)
         
         # Update status
@@ -207,7 +357,10 @@ class ImageDimensioner:
         
         # Process when we have two points
         if len(self.points) == 2:
-            self.draw_line(self.points[0], self.points[1])
+            # Draw line using canvas coordinates (zoomed)
+            canvas_point1 = (self.points[0][0] * self.zoom_factor, self.points[0][1] * self.zoom_factor)
+            canvas_point2 = (self.points[1][0] * self.zoom_factor, self.points[1][1] * self.zoom_factor)
+            self.draw_line(canvas_point1, canvas_point2)
             
             if self.mode == "calibration":
                 self.calibrate()
@@ -264,6 +417,9 @@ class ImageDimensioner:
         # Calculate calibration factor (units per pixel)
         self.calibration_factor = known_distance / pixel_distance
         
+        # Log calibration
+        self.add_log(f"Calibration: {pixel_distance:.2f}px = {known_distance:.2f} {self.unit} | Scale: {self.calibration_factor:.6f} {self.unit}/px")
+        
         messagebox.showinfo(
             "Calibration Complete",
             f"Calibration successful!\n"
@@ -289,6 +445,9 @@ class ImageDimensioner:
         pixel_distance = self.calculate_distance(self.points[0], self.points[1])
         real_distance = pixel_distance * self.calibration_factor
         
+        # Log measurement
+        self.add_log(f"Measured: {real_distance:.4f} {self.unit} ({pixel_distance:.2f}px)")
+        
         messagebox.showinfo(
             "Measurement Result",
             f"Pixel distance: {pixel_distance:.2f} pixels\n"
@@ -305,10 +464,13 @@ class ImageDimensioner:
         """Show about dialog."""
         messagebox.showinfo(
             "About Image Dimensioner",
-            "Image Dimensioner v1.0\n\n"
+            "Image Dimensioner v2.0\n\n"
             "A standalone application for measuring dimensions on diagrams.\n\n"
             "Features:\n"
             "- Load various image formats\n"
+            "- Unit selection (mm, cm, m, inches, feet)\n"
+            "- Zoom with Ctrl+scroll\n"
+            "- Measurement logging\n"
             "- Calibrate using known distances\n"
             "- Measure real-world dimensions\n\n"
             "Built with Python, Tkinter, and Pillow"
@@ -321,19 +483,27 @@ class ImageDimensioner:
             "1. LOAD IMAGE:\n"
             "   - Use File > Open Image to select an image\n"
             "   - Supported formats: PNG, JPG, JPEG, BMP, GIF\n\n"
-            "2. CALIBRATION:\n"
+            "2. SELECT UNITS:\n"
+            "   - Choose your preferred unit from the dropdown\n"
+            "   - Default is mm (millimeters)\n\n"
+            "3. CALIBRATION:\n"
             "   - Select Mode > Calibration\n"
             "   - Click two points on a known distance in the image\n"
             "   - Enter the actual physical distance when prompted\n"
             "   - The calibration factor will be calculated\n\n"
-            "3. MEASUREMENT:\n"
+            "4. MEASUREMENT:\n"
             "   - Select Mode > Measurement\n"
             "   - Click two points to measure\n"
-            "   - The real-world distance will be displayed\n\n"
+            "   - The real-world distance will be displayed\n"
+            "   - All measurements are logged at the bottom\n\n"
+            "Navigation:\n"
+            "- Ctrl+scroll: Zoom in/out\n"
+            "- Scroll: Move up/down\n"
+            "- Shift+scroll: Move left/right\n\n"
             "Tips:\n"
             "- Calibrate with a longer reference distance for better accuracy\n"
             "- You can recalibrate at any time\n"
-            "- Use scrollbars to navigate large images"
+            "- Clear logs with the 'Clear Logs' button"
         )
         messagebox.showinfo("Instructions", instructions)
 

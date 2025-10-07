@@ -1,52 +1,54 @@
-# Image Dimensioner - Usage Guide
+# User Guide
 
-## Table of Contents
-1. [Getting Started](#getting-started)
-2. [Basic Workflow](#basic-workflow)
-3. [Detailed Instructions](#detailed-instructions)
-4. [Tips and Best Practices](#tips-and-best-practices)
-5. [Troubleshooting](#troubleshooting)
+## Quick Start
 
-## Getting Started
+### Launch Application
+- **Desktop**: Double-click `ImageDimensioner.exe`
+- **Python**: Run `python image_dimensioner.py`
 
-### Installation
+### Workflow
+1. **Load Image** → File → Open Image
+2. **Select Units** → Choose preferred measurement units from dropdown
+3. **Calibrate** → Mode → Calibration → Click two points on known distance → Enter actual measurement
+4. **Measure** → Mode → Measurement → Click any two points for real-world distance
 
-1. **Install Python** (version 3.6 or higher)
-   - Download from [python.org](https://www.python.org/downloads/)
-   - Ensure Python is added to your system PATH
+## Interface Controls
 
-2. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Navigation
+- **Zoom**: Ctrl + Mouse Wheel
+- **Vertical Pan**: Mouse Wheel  
+- **Horizontal Pan**: Shift + Mouse Wheel
 
-3. **Run the Application**
-   ```bash
-   python image_dimensioner.py
-   ```
+### Measurement Units
+- Millimeters (mm) - *default*
+- Centimeters (cm)
+- Meters (m)
+- Inches (in)
+- Feet (ft)
 
-## Basic Workflow
+### Measurement Log
+- Real-time measurement history
+- Timestamp for each measurement
+- Clear log function available
 
-The application follows a simple three-step process:
+## Best Practices
 
-```
-1. LOAD → 2. CALIBRATE → 3. MEASURE
-```
+### Calibration Tips
+- Use the longest known distance available for better accuracy
+- Ensure calibration points are clearly visible and well-defined
+- Recalibrate when switching between different images or scales
 
-### Quick Start Example
+### Measurement Accuracy
+- Zoom in for precise point selection
+- Use consistent point selection (e.g., center of features)
+- Take multiple measurements for critical dimensions
 
-1. **Load**: Open an image (File → Open Image)
-2. **Calibrate**: 
-   - Switch to Calibration mode (Mode → Calibration)
-   - Click two points on a known distance (e.g., a ruler showing 10cm)
-   - Enter "10" when prompted for the distance
-3. **Measure**:
-   - Switch to Measurement mode (Mode → Measurement)
-   - Click any two points to measure the distance
+### File Formats
+Supported: PNG, JPG, JPEG, BMP, GIF
 
-## Detailed Instructions
+---
 
-### 1. Loading an Image
+*For technical support, visit the [GitHub repository](https://github.com/ahmed-tkhan/Image_Dimensioner)*
 
 **Supported Formats**: PNG, JPG, JPEG, BMP, GIF
 
